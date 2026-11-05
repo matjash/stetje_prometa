@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Štetje prometa">
+<title>Štetje prometa</title>
+<style>
+:root{--bg:#0f172a;--panel:#1e293b;--line:#334155;--fg:#eef2f8;--mut:#9fb0c8;--acc:#38bdf8;--acc-fg:#06263a;--btn:#ffffff1f;--chip:#0006}
+body.dirA{--bg:#000;--panel:#111;--line:#3a3a3a;--fg:#fff;--mut:#a3a3a3;--acc:#fff;--acc-fg:#000;--btn:#ffffff24;--chip:#ffffff1a}
+body.dirB{--bg:#f2f2f2;--panel:#fff;--line:#cfcfcf;--fg:#111;--mut:#555;--acc:#111;--acc-fg:#fff;--btn:#0000001a;--chip:#0000000f}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:#0f172a}
+body{min-height:100vh}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.35 system-ui,Roboto,sans-serif;transition:background .25s}
+header{display:flex;align-items:center;gap:9px;padding:calc(10px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 10px calc(12px + env(safe-area-inset-left));background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;transition:background .25s}
+header h1{font-size:17px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header a{color:var(--fg);text-decoration:none;font-size:20px}
+.chip{font-size:13px;padding:3px 8px;border-radius:99px;background:var(--chip);color:var(--fg);white-space:nowrap;border:0}
+main{padding:10px 10px 12px;max-width:640px;margin:0 auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.card h3{margin:0 0 6px;font-size:16px}
+label{display:block;font-size:13px;color:var(--mut);margin:8px 0 4px}
+input[type=text],input:not([type]),input[type=datetime-local]{width:100%;padding:11px;border-radius:8px;border:1px solid var(--line);background:#0005;color:var(--fg);font-size:16px;color-scheme:dark}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+button,.btn{font:inherit;border:0;border-radius:10px;padding:11px 12px;background:#ffffff1f;color:var(--fg);cursor:pointer;text-decoration:none;display:inline-block;text-align:center}
+body button:not(.primary):not(.danger),body .btn:not(.primary):not(.danger){background:var(--btn);color:var(--fg)}
+.primary{background:var(--acc);color:var(--acc-fg);font-weight:700}
+.danger{background:#991b1b}
+.small{padding:7px 10px;font-size:14px}
+.sess{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
+.sess:first-child{border-top:0}
+.sess .meta{flex:1;min-width:0}.sess .meta b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mut{color:var(--mut);font-size:13px}
+.pill{font-size:11px;padding:2px 7px;border-radius:99px;background:#14532d;color:#86efac;vertical-align:middle}
+/* direction switch */
+.dir{display:flex;gap:8px;margin-bottom:8px}
+.dir button{flex:1;padding:11px 6px;font-weight:700;border:3px solid;opacity:.55}
+.dir button[data-dir=A]{background:#000!important;color:#fff!important;border-color:#666}
+.dir button[data-dir=B]{background:#fff!important;color:#111!important;border-color:#999}
+.dir button.on{opacity:1;box-shadow:0 0 0 3px var(--fg)}
+.dir button:not(.on){opacity:.4;filter:saturate(.4)}
+/* counting grid */
+.cap{font-size:12.5px;color:var(--mut);margin:7px 2px 4px;display:flex;justify-content:space-between}
+.r{display:grid;gap:6px;margin-bottom:6px}
+.r2{grid-template-columns:repeat(2,1fr)}.r3{grid-template-columns:repeat(3,1fr)}.r4{grid-template-columns:repeat(4,1fr)}
+.r5{grid-template-columns:repeat(5,1fr)}.r9{grid-template-columns:repeat(9,1fr);gap:4px}
+.tap{color:#fff;position:relative;border-radius:12px;padding:8px 2px;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;touch-action:manipulation;cursor:pointer;transition:transform .06s;box-shadow:inset 0 -3px 0 #0003;outline:2px solid #ffffff2e;outline-offset:-2px}
+.r5 .tap{min-height:76px}.r9 .tap{min-height:54px;border-radius:9px}
+.tap .ic{font-size:25px;line-height:1}
+.tap .num{font-size:28px;font-weight:800;line-height:1}
+.r9 .tap .num{font-size:20px}
+.tap .lb{font-size:12.5px;margin-top:4px;font-weight:600;text-align:center;line-height:1.1}
+.tap .n{position:absolute;top:3px;right:6px;font-size:12px;color:#fffc;font-variant-numeric:tabular-nums;font-weight:600}
+.r9 .tap .n{right:0;left:0;text-align:center;top:2px;font-size:10.5px}
+.r9 .tap .num{margin-top:8px}
+.g-car{background:#2563eb}.g-soft{background:#047857}.g-van{background:#0e7490}
+.g-lgv{background:#b45309}.g-hgv{background:#7c2d12}.g-bus{background:#c2410c}
+.g-agri{background:#4d7c0f}.g-train{background:#475569}
+.tap.flash{filter:brightness(1.6);transform:scale(.94)}
+.locked .tap{opacity:.3}
+.bar{position:sticky;bottom:0;background:var(--panel);border-top:1px solid var(--line);padding:9px 10px;display:flex;gap:8px;align-items:center;transition:background .25s}
+.bar .tot{flex:1;text-align:center;font-variant-numeric:tabular-nums;line-height:1.15}
+.bar .tot b{font-size:22px;display:block}
+/* recent entries + records */
+.recent{font-size:13px;line-height:1.25;margin-bottom:6px}
+.recent .ri,.rec{display:flex;align-items:center;gap:8px;padding:3px 0}
+.recent .ri .tx,.rec .tx{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block}
+.dot.A{background:#000;box-shadow:0 0 0 2px #fff}.dot.B{background:#fff;box-shadow:0 0 0 2px #000}.dot.N{background:#94a3b8}
+.x{background:#0005;border-radius:7px;padding:3px 9px;font-size:13px}
+.rec{border-top:1px solid var(--line);padding:7px 0;font-size:14px}
+.rec .tx{white-space:normal}
+.ri,.rec{border-radius:8px;transition:background .5s;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.pressing{background:#ef444455!important;transition:background .55s linear}
+#mtext{white-space:pre-line}
+.sheet .ch{background:#0f766e!important;color:#fff!important;font-size:40px!important;font-weight:800;padding:18px 6px!important;display:flex;flex-direction:column;align-items:center;line-height:1}
+.sheet .ch small{font-size:15px;font-weight:600;margin-top:4px}
+.sheetbox button:not(#myes):not(#pok):not(.ch){background:#ffffff1f!important;color:#eef2f8!important}
+.rec .tm{font-variant-numeric:tabular-nums;color:var(--mut);width:64px;flex:none}
+.barwrap{position:sticky;bottom:0;background:var(--panel);border-top:1px solid var(--line);padding:6px 10px calc(9px + env(safe-area-inset-bottom));transition:background .25s}
+.barwrap .bar{position:static;border:0;padding:0;background:transparent}
+/* results */
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:15px}
+th,td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+tr.sub td{color:var(--mut);font-size:13px}
+tr.tot td{font-weight:800}
+tr.grp td{padding-top:10px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:#0004;border-radius:10px;padding:10px}
+.stat b{font-size:22px;display:block}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chk{display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--mut);font-size:14px}
+.chk input{width:20px;height:20px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px;margin:6px 0}
+.kv span:nth-child(odd){color:var(--mut)}
+.gap{color:#fbbf24}
+.wx{display:flex;gap:10px;font-size:14px;padding:5px 0;border-top:1px solid var(--line)}
+.wx:first-of-type{border-top:0}
+.toast{position:fixed;left:50%;top:calc(62px + env(safe-area-inset-top));transform:translateX(-50%);background:#000e;padding:9px 15px;border-radius:9px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:40;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+/* bottom sheets */
+.sheet{position:fixed;inset:0;background:#000b;z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet.hidden{display:none}
+.sheetbox{padding-bottom:calc(20px + env(safe-area-inset-bottom))!important;color:#eef2f8;background:#1e293b;width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:16px 16px 20px;border-top:1px solid #334155}
+.sheet h2{margin:0;font-size:18px}
+.big{font-size:64px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums;line-height:1.1;margin:6px 0}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:44px;background:transparent;margin:4px 0 10px}
+input[type=range]::-webkit-slider-runnable-track{height:12px;border-radius:6px;background:linear-gradient(90deg,#f97316 var(--p,0%),#334155 var(--p,0%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:36px;height:36px;border-radius:50%;background:#fff;margin-top:-12px;box-shadow:0 1px 6px #0008}
+.ticks{display:flex;justify-content:space-between;font-size:12px;color:#9fb0c8;margin:-8px 4px 10px}
+.sheet .row{margin-top:8px}
+.sheet .row button{padding:14px 6px;font-size:17px}
+#mtext{font-size:17px;margin:4px 0 12px;line-height:1.4}
+</style>
+</head>
+<body>
+<header><a href="#" title="Seje">☰</a><h1 id="title">Štetje prometa</h1><button id="wxchip" class="chip" style="display:none"></button><span id="clock" class="mut"></span></header>
+<div id="app"></div>
+
+<div id="sheet" class="sheet hidden"><div class="sheetbox">
+  <h2 id="stitle">🚌 Avtobus</h2>
+  <div class="mut" id="pnote">Potniki brez voznika. Ocena je čisto v redu.</div>
+  <div class="big" id="pv">0</div>
+  <input type="range" id="pr" min="0" max="60" step="1" value="0">
+  <div class="ticks" id="pticks"></div>
+  <div class="row" id="pdeltas"></div>
+  <div class="row"><button id="pcancel">Prekliči</button><button id="pskip">Ni prešteto</button><button class="primary" id="pok" style="background:#38bdf8;color:#06263a">Shrani</button></div>
+</div></div>
+
+<div id="choice" class="sheet hidden"><div class="sheetbox">
+  <h2>🏍️ Motorist — koliko oseb je na vozilu?</h2>
+  <div class="row" style="margin-top:14px"><button class="ch" data-n="1">1<small>oseba</small></button><button class="ch" data-n="2">2<small>osebi</small></button></div>
+  <div class="row"><button id="chcancel">Prekliči</button></div>
+</div></div>
+
+<div id="modal" class="sheet hidden"><div class="sheetbox">
+  <div id="mtext"></div>
+  <div class="row"><button id="mno">Prekliči</button><button id="myes" style="background:#38bdf8;color:#06263a;font-weight:700">V redu</button></div>
+</div></div>
+
+<div id="toast" class="toast"></div>
+<script>
+'use strict';
+const VER='1.6';
+/* ================= categories ================= */
+const CAT={
+  avto:{lb:'Osebni avto',ic:'🚗',g:'car',occ:true,motor:true},
+  pesec:{lb:'Pešec',ic:'🚶',g:'soft'},
+  motorist:{lb:'Motorist',ic:'🏍️',g:'soft',motor:true},
+  kolesar:{lb:'Kolesar',ic:'🚲',g:'soft'},
+  kombi:{lb:'Potniški kombi',ic:'🚐',g:'van',occ:true,motor:true},
+  lahko_tovorno:{lb:'Lažje tovorno vozilo (2 osi)',short:'Lažje tovorno<br>(2 osi)',ic:'🚚',g:'lgv',motor:true},
+  tezko_tovorno:{lb:'Težje tovorno vozilo (3 osi in več)',short:'Težje tovorno<br>(3 osi in več)',ic:'🚛',g:'hgv',motor:true},
+  bus_mestni:{lb:'Mestni ali medkrajevni avtobus',short:'Mestni/<br>medkrajevni',ic:'🚌',g:'bus',bus:true,motor:true},
+  bus_solski:{lb:'Šolski avtobus',short:'Šolski',ic:'🚌',g:'bus',bus:true,motor:true},
+  bus_delavski:{lb:'Delavski avtobus',short:'Delavski',ic:'🚌',g:'bus',bus:true,motor:true},
+  bus_turisticni:{lb:'Turistični avtobus, občasni prevoz',short:'Turistični/<br>občasni',ic:'🚌',g:'bus',bus:true,motor:true},
+  kmetijsko:{lb:'Kmetijska mehanizacija',ic:'🚜',g:'agri',motor:true},
+  vlak:{lb:'Vlak',ic:'🚆',g:'train'}};
+const BUSES=Object.keys(CAT).filter(c=>CAT[c].bus);
+const MOTOR=Object.keys(CAT).filter(c=>CAT[c].motor);
+const LEGACY={car:'avto',van:'kombi',truck:'tezko_tovorno',bus:'bus_delavski',bus_ostali:'bus_delavski',motorcycle:'motorist',bike:'kolesar',pedestrian:'pesec'};
+const CAR_MAX=5,VAN_MAX=9,BUS_MAX=60,TRAIN_MAX=500;
+const OSEB=n=>n===1?'oseba':n===2?'osebi':n<5?'osebe':'oseb';
+
+/* ================= helpers ================= */
+const $=s=>document.querySelector(s);
+const app=$('#app');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function uuid(){const b=new Uint8Array(16);crypto.getRandomValues(b);b[6]=b[6]&15|64;b[8]=b[8]&63|128;
+  const h=[...b].map(x=>x.toString(16).padStart(2,'0')).join('');
+  return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`}
+function toast(t,ms){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),ms||1700)}
+const p2=n=>String(n).padStart(2,'0');
+function iso(ms){const d=new Date(ms),o=-d.getTimezoneOffset(),a=Math.abs(o);
+  return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}${o>=0?'+':'-'}${p2(a/60|0)}:${p2(a%60)}`}
+const hm=ms=>{const d=new Date(ms);return `${p2(d.getHours())}:${p2(d.getMinutes())}`};
+const hms=ms=>{const d=new Date(ms);return `${hm(ms)}:${p2(d.getSeconds())}`};
+const fmtTime=ms=>{if(!ms)return'';const d=new Date(ms);return `${d.getDate()}. ${d.getMonth()+1}. ${hm(ms)}`};
+const localInput=ms=>{if(!ms)return'';const d=new Date(ms);return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}`};
+const dur=ms=>{const m=Math.round(ms/60000);return m<60?`${m} min`:`${Math.floor(m/60)} h ${p2(m%60)} min`};
+const stamp=()=>{const d=new Date();return `${d.getFullYear()}${p2(d.getMonth()+1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}`};
+const slug=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,40)||'seja';
+function haptic(){try{if(window.Android)Android.haptic();else if(navigator.vibrate)navigator.vibrate(20)}catch(e){}}
+const avg=(a,b)=>b?(a/b).toFixed(2).replace('.',','):'–';
+
+/* in-app confirm dialog (Android WebView blocks window.confirm) */
+let modalCb=null;
+function ask(text,yes='V redu',danger=false){
+  return new Promise(res=>{
+    $('#mtext').textContent=text;const y=$('#myes');y.textContent=yes;
+    y.style.background=danger?'#b91c1c':'#38bdf8';y.style.color=danger?'#fff':'#06263a';
+    const close=v=>{$('#modal').classList.add('hidden');modalCb=null;res(v)};
+    modalCb=()=>close(false);
+    $('#mno').onclick=()=>close(false);y.onclick=()=>close(true);
+    $('#modal').classList.remove('hidden')})}
+
+/* long press (≈0.6 s) on a row → callback */
+function longPress(el,cb){
+  let t=null,x=0,y=0;
+  const cancel=()=>{if(t){clearTimeout(t);t=null}el.classList.remove('pressing')};
+  el.addEventListener('pointerdown',e=>{x=e.clientX;y=e.clientY;el.classList.add('pressing');
+    t=setTimeout(()=>{t=null;el.classList.remove('pressing');haptic();cb()},600)});
+  el.addEventListener('pointermove',e=>{if(Math.abs(e.clientX-x)>10||Math.abs(e.clientY-y)>10)cancel()});
+  ['pointerup','pointercancel','pointerleave'].forEach(n=>el.addEventListener(n,cancel));
+  el.addEventListener('contextmenu',e=>e.preventDefault());
+}
+function confirmDelete(e,s){
+  return ask(`Izbrišem ta zapis?\n\n${hms(e.t)} · ${evText(e,s).replace(/&amp;/g,'&').replace(/&[a-z#0-9]+;/g,'')}\n\nTega ni mogoče razveljaviti.`,'Izbriši zapis',true)}
+
+/* ================= storage ================= */
+const HAS=typeof window.Android!=='undefined';
+const STANDALONE=window.navigator.standalone===true||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);
+if(!HAS){
+  for(const [rel,href,extra] of [['manifest','manifest.webmanifest'],['apple-touch-icon','apple-touch-icon.png'],['icon','icon-192.png',{type:'image/png'}]]){
+    const l=document.createElement('link');l.rel=rel;l.href=href;if(extra)Object.assign(l,extra);document.head.appendChild(l)}
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+  if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))
+    window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+/* keep screen on while counting (browser; the Android app does this natively) */
+let wakeLock=null;
+async function keepAwake(on){
+  if(HAS||!('wakeLock' in navigator))return;
+  try{if(on&&!wakeLock){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null})}
+      else if(!on&&wakeLock){const w=wakeLock;wakeLock=null;await w.release()}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&/^#count\//.test(location.hash))keepAwake(true)});
+const store={
+  read(n){try{return HAS?(Android.read(n)||''):(localStorage.getItem('f_'+n)||'')}catch(e){return ''}},
+  write(n,c){try{if(HAS)return Android.write(n,c);localStorage.setItem('f_'+n,c);return true}catch(e){return false}},
+  append(n,l){try{if(HAS)return Android.append(n,l);localStorage.setItem('f_'+n,(localStorage.getItem('f_'+n)||'')+l+'\n');return true}catch(e){return false}},
+  remove(n){try{if(HAS)return Android.remove(n);localStorage.removeItem('f_'+n);return true}catch(e){return false}}};
+let sessions=[];
+function loadSessions(){try{sessions=JSON.parse(store.read('sessions.json')||'[]')}catch(e){sessions=[]}}
+function saveSessions(){if(!store.write('sessions.json',JSON.stringify(sessions)))toast('⚠ Seje ni bilo mogoče shraniti!',4000)}
+const getS=id=>sessions.find(s=>s.id===+id);
+function loadEvents(id){
+  const m=new Map();
+  for(const ln of store.read(`ev_${id}.log`).split('\n')){
+    if(!ln)continue;
+    if(ln[0]==='-'){m.delete(ln.slice(1));continue}
+    const p=ln.split('|');if(p.length<5)continue;
+    m.set(p[0],{u:p[0],t:+p[1],c:LEGACY[p[2]]||p[2],o:p[3]===''?null:+p[3],d:p[4]});
+  }
+  return [...m.values()];
+}
+function saveEvent(id,e){if(!store.append(`ev_${id}.log`,[e.u,e.t,e.c,e.o??'',e.d].join('|')))toast('⚠ Zapisa ni bilo mogoče shraniti!',4000)}
+function deleteEvent(id,u){store.append(`ev_${id}.log`,'-'+u)}
+function loadWx(id){return store.read(`wx_${id}.log`).split('\n').filter(Boolean).map(l=>{try{return JSON.parse(l)}catch(e){return null}}).filter(Boolean)}
+loadSessions();
+
+/* ================= weather (Open-Meteo, no key) ================= */
+const WMO={0:['☀️','jasno'],1:['🌤️','pretežno jasno'],2:['⛅','delno oblačno'],3:['☁️','oblačno'],45:['🌫️','megla'],48:['🌫️','megla z ivjem'],
+  51:['🌦️','rahlo rosenje'],53:['🌦️','rosenje'],55:['🌧️','močno rosenje'],56:['🌧️','zmrzujoče rosenje'],57:['🌧️','zmrzujoče rosenje'],
+  61:['🌦️','rahel dež'],63:['🌧️','dež'],65:['🌧️','močan dež'],66:['🌧️','zmrzujoč dež'],67:['🌧️','zmrzujoč dež'],
+  71:['🌨️','rahlo sneženje'],73:['🌨️','sneženje'],75:['❄️','močno sneženje'],77:['🌨️','zrnat sneg'],
+  80:['🌦️','rahle plohe'],81:['🌧️','plohe'],82:['⛈️','močne plohe'],85:['🌨️','snežne plohe'],86:['❄️','močne snežne plohe'],
+  95:['⛈️','nevihta'],96:['⛈️','nevihta s točo'],99:['⛈️','močna nevihta s točo']};
+const wxIcon=c=>(WMO[c]||['🌡️'])[0], wxDesc=c=>(WMO[c]||['','neznano'])[1];
+let wxFailAt=0;
+async function wxCheck(s,force){
+  if(!s||s.lat==null||s.lon==null)return;
+  const w=loadWx(s.id),last=w.length?w[w.length-1].t:0;
+  if(!force&&Date.now()-last<55*60000)return;
+  if(!force&&Date.now()-wxFailAt<10*60000)return;
+  try{
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${s.lat}&longitude=${s.lon}&current=temperature_2m,precipitation,weather_code,wind_speed_10m,cloud_cover&timezone=auto`;
+    const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(r.status);
+    const c=(await r.json()).current;
+    const rec={t:Date.now(),temp:c.temperature_2m,precip:c.precipitation,code:c.weather_code,wind:c.wind_speed_10m,cloud:c.cloud_cover};
+    store.append(`wx_${s.id}.log`,JSON.stringify(rec));paintWx(s);
+    if(force)toast(`Vreme: ${wxDesc(rec.code)}, ${Math.round(rec.temp)} °C`);
+  }catch(e){wxFailAt=Date.now();if(force)toast('Vremena ni mogoče prebrati (ni interneta?)',3000)}
+}
+function paintWx(s){
+  const chip=$('#wxchip');
+  if(!s){chip.style.display='none';return}
+  chip.style.display='';
+  if(s.lat==null){chip.textContent='📍 brez lokacije';chip.onclick=()=>locateFor(s);return}
+  const w=loadWx(s.id),l=w[w.length-1];
+  chip.textContent=l?`${wxIcon(l.code)} ${Math.round(l.temp)}°`:'🌡️ …';
+  chip.onclick=()=>wxCheck(s,true);
+}
+function wxAt(wx,t){let best=null;for(const r of wx){if(Math.abs(r.t-t)<=90*60000&&(!best||Math.abs(r.t-t)<Math.abs(best.t-t)))best=r}return best}
+
+/* ================= GPS ================= */
+let locCb=null;
+window.onLocation=(lat,lon,acc)=>{const cb=locCb;locCb=null;if(cb)cb(lat,lon,acc)};
+window.onLocationError=m=>{locCb=null;toast(m,3000)};
+function locate(cb){
+  if(HAS){locCb=cb;toast('Iščem GPS položaj …',25000);Android.locate();return}
+  if(!navigator.geolocation){toast('GPS ni na voljo v tem brskalniku');return}
+  toast('Iščem GPS položaj …',25000);
+  let best=null,done=false,id=null,to=null;
+  const stop=()=>{done=true;if(id!=null)navigator.geolocation.clearWatch(id);clearTimeout(to)};
+  const finish=()=>{if(done)return;stop();if(best)cb(best.coords.latitude,best.coords.longitude,best.coords.accuracy);else toast('Ni GPS signala – poskusi na prostem',3000)};
+  id=navigator.geolocation.watchPosition(p=>{if(!best||p.coords.accuracy<best.coords.accuracy)best=p;if(p.coords.accuracy<=25)finish()},
+    e=>{if(done)return;if(e.code===1){stop();toast('Dovoljenje za lokacijo ni bilo dano (Nastavitve → Zasebnost → Lokacija)',4000)}},
+    {enableHighAccuracy:true,maximumAge:60000,timeout:25000});
+  to=setTimeout(finish,25000);
+}
+function locateFor(s){locate((lat,lon,acc)=>{s.lat=+lat.toFixed(6);s.lon=+lon.toFixed(6);saveSessions();toast(`Lokacija shranjena (±${Math.round(acc)} m)`);paintWx(s);wxCheck(s,true)})}
+
+/* ================= event text ================= */
+function evText(e,s){
+  const c=CAT[e.c],lb=c?c.lb:e.c;let o='';
+  if(e.c==='avto'||e.c==='kombi')o=e.o!=null?` · ${e.c==='avto'&&e.o>=5?'5+':e.o} ${OSEB(e.o)}`:'';
+  else if(c&&c.bus)o=e.o==null?' · potniki niso prešteti':` · ${e.o>=BUS_MAX?'60+':e.o} potnikov`;
+  else if(e.c==='motorist')o=e.o!=null?` · ${e.o} ${OSEB(e.o)}`:'';
+  else if(e.c==='vlak')o=e.o==null?' · potniki niso prešteti':` · ${e.o>=TRAIN_MAX?TRAIN_MAX+'+':e.o} potnikov`;
+  const d=e.d?` · ${dlab(s,e.d)}`:'';
+  return esc(lb+o+d)}
+
+/* ================= statistics ================= */
+function tally(evs){
+  const t={};
+  for(const e of evs)for(const d of [e.d,'*']){
+    const x=t[d]=t[d]||{n:{},occ:{},sum:{},cnt:{}};
+    x.n[e.c]=(x.n[e.c]||0)+1;
+    if(e.o!=null){const k=e.c+':'+e.o;x.occ[k]=(x.occ[k]||0)+1;x.sum[e.c]=(x.sum[e.c]||0)+e.o;x.cnt[e.c]=(x.cnt[e.c]||0)+1}
+  }
+  return t}
+const T=(t,d,f,k)=>(t[d]&&t[d][f][k])||0;
+const Tn=(t,d,list)=>list.reduce((a,c)=>a+T(t,d,'n',c),0);
+function gaps(evs,s,minGap=10*60000){
+  const ts=evs.map(e=>e.t).sort((a,b)=>a-b);
+  const pts=[s.started_at,...ts];if(s.ended_at)pts.push(s.ended_at);
+  const out=[];for(let i=1;i<pts.length;i++)if(pts[i]-pts[i-1]>minGap)out.push([pts[i-1],pts[i]]);
+  return out}
+
+/* ================= CSV ================= */
+function csv(rows,semi){
+  const sep=semi?';':',';
+  return '﻿'+rows.map(r=>r.map(v=>{
+    if(v==null)v='';
+    if(typeof v==='number'&&semi)v=String(v).replace('.',',');
+    v=String(v);return /[",;\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(sep)).join('\r\n')+'\r\n'}
+const dlab=(s,d)=>d==='A'?(s.dir_a||'A'):d==='B'?(s.dir_b||'B'):'';
+const RAW_HEAD=['seja_id','lokacija','opazovalec','lat','lon','seja_zacetek','seja_konec','id_zapisa','cas','datum','ura','kategorija','opis','osebe_potniki','opomba','smer','smer_opis','temp_c','vreme','padavine_mm','veter_kmh','oblacnost_pct','vreme_ob'];
+function rawRows(s,evs){
+  const wx=loadWx(s.id);
+  return [...evs].sort((a,b)=>a.t-b.t).map(e=>{const i=iso(e.t),w=wxAt(wx,e.t);
+    let note='';
+    if(e.c==='avto'&&e.o===CAR_MAX)note='5 ali več';
+    if(CAT[e.c]&&CAT[e.c].bus)note=e.o==null?'ni prešteto':e.o>=BUS_MAX?'60 ali več':'potniki brez voznika';
+    if(e.c==='vlak')note=e.o==null?'ni prešteto':e.o>=TRAIN_MAX?TRAIN_MAX+' ali več':'potniki';
+    if(e.c==='motorist')note=e.o==null?'osebe niso zabeležene':'osebe na vozilu';
+    return [s.id,s.location,s.observer,s.lat,s.lon,iso(s.started_at),s.ended_at?iso(s.ended_at):'',e.u,i,i.slice(0,10),i.slice(11,19),
+      e.c,CAT[e.c]?CAT[e.c].lb:e.c,e.o,note,e.d,dlab(s,e.d),...(w?[w.temp,wxDesc(w.code),w.precip,w.wind,w.cloud,hm(w.t)]:['','','','','',''])]});
+}
+const INT_COLS=['avto_1','avto_2','avto_3','avto_4','avto_5plus','avto_skupaj','osebe_v_avtih',
+  'kombi_1','kombi_2','kombi_3','kombi_4','kombi_5','kombi_6','kombi_7','kombi_8','kombi_9','kombi_skupaj','osebe_v_kombijih',
+  'pesec','kolesar','motorist','osebe_na_motorjih','lahko_tovorno','tezko_tovorno',...BUSES,'bus_skupaj','potniki_bus','bus_s_prestetimi_potniki',
+  'kmetijsko','vlak','potniki_vlak','motorna_vozila_skupaj'];
+const WX_COLS=['temp_c','padavine_mm','vreme','veter_kmh','oblacnost_pct'];
+function intervalRows(s,evs,min){
+  const bins=new Map(),wx=loadWx(s.id);
+  for(const e of evs){
+    const d=new Date(e.t);d.setMinutes(d.getMinutes()-d.getMinutes()%min,0,0);
+    const key=d.getTime()+'|'+e.d;
+    if(!bins.has(key))bins.set(key,Object.fromEntries(INT_COLS.map(c=>[c,0])));
+    const b=bins.get(key),c=e.c;
+    if(c==='avto'){b.avto_skupaj++;if(e.o){b[e.o>=CAR_MAX?'avto_5plus':'avto_'+e.o]++;b.osebe_v_avtih+=e.o}}
+    else if(c==='kombi'){b.kombi_skupaj++;if(e.o){b['kombi_'+Math.min(e.o,VAN_MAX)]++;b.osebe_v_kombijih+=e.o}}
+    else if(c in b)b[c]++;
+    if(c==='motorist')b.osebe_na_motorjih+=(e.o||1);
+    if(c==='vlak'&&e.o!=null)b.potniki_vlak+=e.o;
+    if(CAT[c]&&CAT[c].bus){b.bus_skupaj++;if(e.o!=null){b.potniki_bus+=e.o;b.bus_s_prestetimi_potniki++}}
+    if(CAT[c]&&CAT[c].motor)b.motorna_vozila_skupaj++;
+  }
+  return [...bins.keys()].sort((a,b)=>{const[x,dx]=a.split('|'),[y,dy]=b.split('|');return x-y||dx.localeCompare(dy)}).map(k=>{
+    const [t,d]=k.split('|'),b=bins.get(k),w=wxAt(wx,+t+min*30000);
+    return [s.id,s.location,iso(+t).slice(0,16),iso(+t+min*60000).slice(0,16),d,dlab(s,d),...INT_COLS.map(c=>b[c]),
+      ...(w?[w.temp,w.precip,wxDesc(w.code),w.wind,w.cloud]:['','','','',''])]});
+}
+function exportCsv(name,text){
+  if(HAS){const r=Android.exportFile(name,text,true);toast(r==='ok'?'Shranjeno v Download/Stetje prometa':r,3000)}
+  else{
+    const blob=new Blob([text],{type:'text/csv'});
+    try{const f=new File([blob],name,{type:'text/csv'});
+      if(navigator.canShare&&navigator.canShare({files:[f]})){
+        navigator.share({files:[f],title:name}).then(()=>toast('CSV deljen')).catch(e=>{if(e&&e.name!=='AbortError')download()});return}}catch(e){}
+    download();
+    function download(){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),10000);toast('CSV prenesen (mapa Prenosi)',3000)}
+  }
+}
+function exportRaw(s){const evs=loadEvents(s.id);exportCsv(`stetje_${s.id}_${slug(s.location)}_zapisi_${stamp()}.csv`,csv([RAW_HEAD,...rawRows(s,evs)],store.read('semi.txt')==='1'))}
+
+/* ================= home ================= */
+let timerI=null,wxI=null;
+function setDirClass(d){document.body.classList.toggle('dirA',d==='A');document.body.classList.toggle('dirB',d==='B')}
+function viewHome(){
+  $('#title').textContent='Štetje prometa';setDirClass('');paintWx(null);
+  const list=[...sessions].sort((a,b)=>b.id-a.id);
+  app.innerHTML=`<main>
+  ${!HAS&&!STANDALONE?`<div class="card" style="border-color:#f59e0b"><h3>📲 Najprej dodaj na začetni zaslon</h3>
+    <div class="mut" style="font-size:14px">iPhone (Safari): <b>Deli</b> (kvadratek s puščico navzgor) → <b>Dodaj na začetni zaslon</b>.<br>Android (Chrome): ⋮ → <b>Dodaj na začetni zaslon</b>.<br>
+    Nato štej vedno prek ikone – podatki v zavihku brskalnika in v ikoni so ločeni. Ne uporabljaj zasebnega brskanja.</div></div>`:''}
+  <div class="card"><h3>Novo štetje</h3>
+    <label>Lokacija *</label><input id="loc" placeholder="npr. Celovška / Tivolska">
+    <label>Opazovalec</label><input id="obs" value="${esc(store.read('observer.txt'))}">
+    <div class="row"><div><label>Smer A (neobvezno)</label><input id="da" placeholder="→ center"></div>
+    <div><label>Smer B (neobvezno)</label><input id="db" placeholder="← iz mesta"></div></div>
+    <div class="row"><div><label>Geogr. širina (lat)</label><input id="lat" inputmode="decimal"></div>
+    <div><label>Geogr. dolžina (lon)</label><input id="lon" inputmode="decimal"></div></div>
+    <label>Opomba</label><input id="note" placeholder="dogodek, zapora …">
+    <div class="row" style="margin-top:12px"><button id="gps">📍 GPS</button><button class="primary" id="start">Začni štetje ▶</button></div>
+    <p class="mut" style="margin:8px 0 0">Z lokacijo in internetom aplikacija vsako uro zabeleži vreme.</p>
+  </div>
+  <div class="card"><h3>Seje</h3>
+    <div>${list.length?list.map(s=>`
+      <div class="sess"><div class="meta"><b>${esc(s.location)}</b>
+        <span class="mut">#${s.id} · ${fmtTime(s.started_at)}${s.ended_at?'–'+hm(s.ended_at):''}${s.observer?' · '+esc(s.observer):''}</span>
+        ${s.ended_at?'':'<span class="pill">odprta</span>'}</div>
+        ${s.ended_at?'':`<a class="btn small primary" href="#count/${s.id}">Štej</a>`}
+        <a class="btn small" href="#results/${s.id}">Rezultati</a></div>`).join(''):'<p class="mut">Še ni sej.</p>'}
+    </div>
+    ${list.length?`<div class="btns"><button class="small" id="all">⬇ Izvozi vse seje (CSV)</button></div>
+    <label class="chk"><input type="checkbox" id="semi" ${store.read('semi.txt')==='1'?'checked':''}> Oblika za Excel (ločilo ; in decimalna vejica)</label>`:''}
+  </div>
+  <details class="card"><summary style="cursor:pointer"><b>ℹ️ O aplikaciji</b></summary>
+    <div class="kv" style="margin-top:8px"><span>Aplikacija</span><span>Štetje prometa</span><span>Različica</span><span>${VER}</span>
+      <span>Izdelano za</span><span>ZUM d. o. o.</span><span>Podatki</span><span>shranjeni samo na tem telefonu</span>
+      <span>Vreme</span><span>Open-Meteo.com (CC BY 4.0)</span><span>Način</span><span>${HAS?'Android aplikacija':STANDALONE?'spletna aplikacija (začetni zaslon)':'spletna aplikacija v brskalniku'}</span></div>
+    <p class="mut">Uporaba na lastno odgovornost. Aplikacija je na voljo brez kakršnega koli jamstva. Za točnost, hrambo in varnost podatkov odgovarja uporabnik – po vsakem štetju izvozi CSV.</p></details>
+  <p class="mut" style="text-align:center">© ZUM d. o. o. · uporaba na lastno odgovornost</p></main>`;
+  $('#gps').onclick=()=>locate((lat,lon,acc)=>{const a=$('#lat'),b=$('#lon');if(a&&b){a.value=lat.toFixed(6);b.value=lon.toFixed(6)}toast(`Položaj nastavljen (±${Math.round(acc)} m)`)});
+  $('#start').onclick=()=>{
+    const loc=$('#loc').value.trim();
+    if(!loc){toast('Vpiši lokacijo');$('#loc').focus();return}
+    const num=v=>{v=String(v).trim().replace(',','.');if(!v)return null;const f=parseFloat(v);return isFinite(f)?f:null};
+    const s={id:sessions.reduce((m,x)=>Math.max(m,x.id),0)+1,location:loc,observer:$('#obs').value.trim(),
+      dir_a:$('#da').value.trim(),dir_b:$('#db').value.trim(),lat:num($('#lat').value),lon:num($('#lon').value),
+      note:$('#note').value.trim(),started_at:Date.now(),ended_at:null};
+    store.write('observer.txt',s.observer);
+    sessions.push(s);saveSessions();location.hash='#count/'+s.id};
+  const all=$('#all');
+  if(all){
+    $('#semi').onchange=e=>store.write('semi.txt',e.target.checked?'1':'0');
+    all.onclick=()=>{const semi=$('#semi').checked;let rows=[RAW_HEAD];
+      for(const s of [...sessions].sort((a,b)=>a.id-b.id))rows=rows.concat(rawRows(s,loadEvents(s.id)));
+      exportCsv(`stetje_vse_${stamp()}.csv`,csv(rows,semi))}}
+}
+
+/* ================= counting ================= */
+let sheetCb=null;
+function openPassSheet(cfg,start,cb){
+  const pr=$('#pr'),pv=$('#pv'),mx=cfg.max;
+  $('#stitle').textContent=cfg.title;$('#pnote').textContent=cfg.note;
+  pr.max=mx;
+  $('#pticks').innerHTML=[0,.25,.5,.75,1].map(f=>`<span>${f===1?mx+'+':Math.round(mx*f)}</span>`).join('');
+  $('#pdeltas').innerHTML=cfg.deltas.map(x=>`<button data-d="${x}">${x>0?'+':'−'}${Math.abs(x)}</button>`).join('');
+  const set=v=>{v=Math.max(0,Math.min(mx,Math.round(v)));pr.value=v;pv.textContent=v>=mx?mx+'+':v;pr.style.setProperty('--p',(v/mx*100)+'%')};
+  set(start);sheetCb=cb;
+  pr.oninput=()=>set(+pr.value);
+  document.querySelectorAll('#sheet [data-d]').forEach(b=>b.onclick=()=>{set(+pr.value+ +b.dataset.d);haptic()});
+  const close=()=>{$('#sheet').classList.add('hidden');sheetCb=null};
+  $('#pcancel').onclick=close;
+  $('#pskip').onclick=()=>{const c=sheetCb;close();c&&c(null)};
+  $('#pok').onclick=()=>{const c=sheetCb,v=+pr.value;close();c&&c(v)};
+  $('#sheet').classList.remove('hidden');
+}
+let choiceCb=null;
+function openChoice(cb){
+  choiceCb=cb;
+  const close=()=>{$('#choice').classList.add('hidden');choiceCb=null};
+  document.querySelectorAll('#choice .ch').forEach(b=>b.onclick=()=>{const c=choiceCb;close();haptic();c&&c(+b.dataset.n)});
+  $('#chcancel').onclick=close;
+  $('#choice').classList.remove('hidden');
+}
+const tap=(c,o,inner)=>`<div class="tap g-${CAT[c].g}" data-c="${c}"${o?` data-o="${o}"`:''}><span class="n" data-k="${c}:${o||''}"></span>${inner}</div>`;
+const tapIc=c=>tap(c,null,`<span class="ic">${CAT[c].ic}</span><span class="lb">${CAT[c].short||CAT[c].lb}</span>`);
+function viewCount(sid){
+  const s=getS(sid);if(!s){location.hash='#';return}
+  const evs=loadEvents(sid);
+  const hasDir=!!(s.dir_a||s.dir_b);
+  let dir=store.read(`dir_${sid}.txt`)||'A';
+  $('#title').textContent=s.location;
+  app.innerHTML=`<main class="${s.ended_at?'locked':''}">
+    ${s.ended_at?'<div class="card">Seja je zaključena. <button class="small" id="reopen">Ponovno odpri</button></div>':''}
+    ${hasDir?`<div class="dir"><button data-dir="A">${esc(s.dir_a||'Smer A')}</button><button data-dir="B">${esc(s.dir_b||'Smer B')}</button></div>`:''}
+    <div class="cap"><span>🚗 Osebni avto — oseb v vozilu (z voznikom)</span></div>
+    <div class="r r5">${[1,2,3,4,5].map(o=>tap('avto',o,`<span class="num">${o===5?'5+':o}</span><span class="lb">${OSEB(o)}</span>`)).join('')}</div>
+    <div class="r r3">${tapIc('pesec')}${tapIc('kolesar')}${tapIc('motorist')}</div>
+    <div class="cap"><span>🚐 Potniški kombi — oseb v vozilu (z voznikom)</span></div>
+    <div class="r r9">${[1,2,3,4,5,6,7,8,9].map(o=>tap('kombi',o,`<span class="num">${o}</span>`)).join('')}</div>
+    <div class="r r2">${tapIc('lahko_tovorno')}${tapIc('tezko_tovorno')}</div>
+    <div class="cap"><span>🚌 Avtobus — izberi vrsto, nato potnike</span></div>
+    <div class="r r4">${BUSES.map(c=>tap(c,null,`<span class="ic">🚌</span><span class="lb">${CAT[c].short}</span>`)).join('')}</div>
+    <div class="r r2">${tapIc('kmetijsko')}${tapIc('vlak')}</div>
+  </main>
+  <div class="barwrap"><div class="recent" id="recent"></div>
+  <div class="bar"><button id="undo">↶ Razveljavi</button>
+    <div class="tot"><b id="tot">0</b><span class="mut" id="tot2"></span></div>
+    <a class="btn" href="#results/${sid}">Rezultati</a></div></div>`;
+
+  function paint(){
+    const c={};let mot=0;
+    for(const e of evs){const k=e.c+':'+(e.c==='avto'||e.c==='kombi'?e.o:'');c[k]=(c[k]||0)+1;if(CAT[e.c]&&CAT[e.c].motor)mot++}
+    app.querySelectorAll('[data-k]').forEach(el=>el.textContent=c[el.dataset.k]||'');
+    $('#tot').textContent=mot;
+    $('#tot2').textContent=`motornih vozil · 🚶 ${c['pesec:']||0} · 🚲 ${c['kolesar:']||0}`;
+    const last=evs.slice(-3).reverse();
+    $('#recent').innerHTML=last.length?last.map(e=>`<div class="ri" data-u="${e.u}"><span class="dot ${e.d||'N'}"></span><span class="tx">${hms(e.t)} · ${evText(e,s)}</span></div>`).join('')
+      +`<div style="display:flex;justify-content:space-between"><span class="mut">pridrži zapis za brisanje</span><a href="#records/${sid}" class="mut" style="color:var(--fg)">Vsi zapisi (${evs.length}) ›</a></div>`
+      :'<div class="mut">Zadnji zapisi se pokažejo tukaj.</div>';
+    $('#recent').querySelectorAll('[data-u]').forEach(r=>longPress(r,async()=>{
+      const e=evs.find(x=>x.u===r.dataset.u);if(!e)return;
+      if(!await confirmDelete(e,s))return;
+      const i=evs.indexOf(e);if(i>=0)evs.splice(i,1);deleteEvent(sid,e.u);paint();toast('Zapis izbrisan')}));
+  }
+  function setDir(d){dir=d;store.write(`dir_${sid}.txt`,d);setDirClass(d);app.querySelectorAll('.dir button').forEach(b=>b.classList.toggle('on',b.dataset.dir===d))}
+  if(hasDir){setDir(dir);app.querySelectorAll('.dir button').forEach(b=>b.onclick=()=>{setDir(b.dataset.dir);haptic()})}else setDirClass('');
+  paint();
+
+  function record(c,o,d,t){const e={u:uuid(),t:t||Date.now(),c,o,d};evs.push(e);saveEvent(sid,e);paint()}
+  app.querySelectorAll('.tap').forEach(el=>el.addEventListener('click',()=>{
+    if(s.ended_at){toast('Seja je zaključena – ponovno jo odpri');return}
+    const c=el.dataset.c,o=el.dataset.o?+el.dataset.o:null,d=hasDir?dir:'',t=Date.now();
+    el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),110);haptic();
+    const last=[...evs].reverse().find(e=>e.c===c&&e.o!=null);
+    if(CAT[c].bus){
+      openPassSheet({title:'🚌 '+CAT[c].lb+' — potnikov',note:'Potniki brez voznika. Ocena je čisto v redu.',max:BUS_MAX,deltas:[-5,-1,1,5]},
+        last?last.o:20,v=>{record(c,v,d,t);toast(v==null?`${CAT[c].lb}: potniki niso prešteti`:`${CAT[c].lb}: ${v>=BUS_MAX?'60+':v} potnikov`)});
+      return}
+    if(c==='vlak'){
+      openPassSheet({title:'🚆 Vlak — potnikov (neobvezno)',note:'Če potnikov ne moreš oceniti, izberi »Ni prešteto« – podatek lahko pridobiš pri prevozniku.',max:TRAIN_MAX,deltas:[-50,-10,10,50]},
+        last?last.o:50,v=>{record(c,v,d,t);toast(v==null?'Vlak: potniki niso prešteti':`Vlak: ${v>=TRAIN_MAX?TRAIN_MAX+'+':v} potnikov`)});
+      return}
+    if(c==='motorist'){openChoice(n=>{record(c,n,d,t);toast(`Motorist: ${n} ${OSEB(n)}`)});return}
+    record(c,o,d,t);
+  }));
+  $('#undo').onclick=()=>{
+    const e=evs.pop();if(!e){toast('Ni česa razveljaviti');return}
+    deleteEvent(sid,e.u);paint();haptic();
+    toast('Odstranjeno: '+(CAT[e.c]?CAT[e.c].lb:e.c)+(e.o!=null?` (${e.o})`:''))};
+  const ro=$('#reopen');if(ro)ro.onclick=()=>{s.ended_at=null;saveSessions();viewCount(sid)};
+  const tick=()=>{const t=Math.max(0,Math.floor((Date.now()-s.started_at)/1000));
+    $('#clock').textContent=`${Math.floor(t/3600)}:${p2(Math.floor(t/60)%60)}:${p2(t%60)}`};
+  paintWx(s);
+  if(!s.ended_at){
+    keepAwake(true);
+    tick();timerI=setInterval(tick,1000);
+    wxCheck(s);wxI=setInterval(()=>wxCheck(s),60000);
+    const lastT=evs.length?Math.max(...evs.map(e=>e.t)):s.started_at;
+    if(Date.now()-lastT>10*60000)toast(`Zadnji zapis pred ${dur(Date.now()-lastT)}. Čase štetja lahko popraviš v Rezultatih.`,4500);
+  }
+}
+
+/* ================= results ================= */
+function viewResults(sid){
+  const s=getS(sid);if(!s){location.hash='#';return}
+  setDirClass('');paintWx(null);
+  const evs=loadEvents(sid),t=tally(evs),wx=loadWx(sid);
+  $('#title').textContent=s.location;
+  const dirs=Object.keys(t).filter(d=>d!=='*').sort();
+  const multi=dirs.length>1||(dirs.length===1&&dirs[0]!=='');
+  const cols=multi?[...dirs,'*']:['*'];
+  const line=(lab,f,cls='')=>`<tr class="${cls}"><td>${lab}</td>${cols.map(d=>`<td>${f(d)}</td>`).join('')}</tr>`;
+  const n=c=>d=>T(t,d,'n',c);
+  let h=`<table><tr><th></th>${cols.map(d=>`<th>${d==='A'||d==='B'?`<span class="dot ${d}"></span> `:''}${d==='*'?'Skupaj':esc(dlab(s,d)||'—')}</th>`).join('')}</tr>`;
+  h+=line('🚗 Osebni avti',n('avto'),'grp');
+  for(const o of [1,2,3,4,5])h+=line(`&nbsp;&nbsp;${o===5?'5+':o} ${OSEB(o)}`,d=>T(t,d,'occ','avto:'+o),'sub');
+  h+=line('&nbsp;&nbsp;oseb skupaj',d=>T(t,d,'sum','avto'),'sub');
+  h+=line('&nbsp;&nbsp;povpr. oseb/avto',d=>avg(T(t,d,'sum','avto'),T(t,d,'cnt','avto')),'sub');
+  h+=line('🚐 Potniški kombiji',n('kombi'),'grp');
+  for(let o=1;o<=VAN_MAX;o++)if(T(t,'*','occ','kombi:'+o))h+=line(`&nbsp;&nbsp;${o} ${OSEB(o)}`,d=>T(t,d,'occ','kombi:'+o),'sub');
+  h+=line('&nbsp;&nbsp;oseb skupaj',d=>T(t,d,'sum','kombi'),'sub');
+  h+=line('&nbsp;&nbsp;povpr. oseb/kombi',d=>avg(T(t,d,'sum','kombi'),T(t,d,'cnt','kombi')),'sub');
+  h+=line('🚌 Avtobusi',d=>Tn(t,d,BUSES),'grp');
+  for(const c of BUSES)h+=line(`&nbsp;&nbsp;${CAT[c].short.replace('<br>','')} <span class="mut">(potn. ${T(t,'*','sum',c)})</span>`,n(c),'sub');
+  h+=line('&nbsp;&nbsp;potnikov skupaj',d=>BUSES.reduce((a,c)=>a+T(t,d,'sum',c),0),'sub');
+  h+=line('&nbsp;&nbsp;povpr. potnikov/avtobus',d=>avg(BUSES.reduce((a,c)=>a+T(t,d,'sum',c),0),BUSES.reduce((a,c)=>a+T(t,d,'cnt',c),0)),'sub');
+  h+=line('🏍️ Motoristi',n('motorist'),'grp');
+  h+=line('&nbsp;&nbsp;oseb na vozilih',d=>T(t,d,'sum','motorist')+T(t,d,'n','motorist')-T(t,d,'cnt','motorist'),'sub');
+  for(const c of ['lahko_tovorno','tezko_tovorno','kmetijsko'])h+=line(`${CAT[c].ic} ${CAT[c].lb}`,n(c));
+  h+=line('Motorna vozila skupaj',d=>Tn(t,d,MOTOR),'tot');
+  for(const c of ['kolesar','pesec'])h+=line(`${CAT[c].ic} ${CAT[c].lb}`,n(c));
+  h+=line('🚆 Vlaki',n('vlak'),'grp');
+  h+=line('&nbsp;&nbsp;potnikov (prešteto)',d=>T(t,d,'sum','vlak'),'sub');
+  h+='</table>';
+
+  const ts=evs.map(e=>e.t).sort((a,b)=>a-b);
+  const end=s.ended_at||(ts.length?Math.max(ts[ts.length-1],Date.now()):Date.now());
+  const span=(end-s.started_at)/3600000;
+  const mot=Tn(t,'*',MOTOR);
+  const gp=gaps(evs,s);
+  const semiOn=store.read('semi.txt')==='1';
+  const people=T(t,'*','sum','avto')+T(t,'*','sum','kombi')+BUSES.reduce((a,c)=>a+T(t,'*','sum',c),0)+T(t,'*','sum','vlak');
+
+  app.innerHTML=`<main>
+    <div class="card">
+      <div class="mut">#${s.id}${s.observer?' · '+esc(s.observer):''}${s.lat!=null?` · ${s.lat}, ${s.lon}`:''}${s.ended_at?'':' · <span class="pill">odprta</span>'}</div>
+      ${s.note?`<div class="mut">${esc(s.note)}</div>`:''}
+      <div class="stats" style="margin-top:10px">
+        <div class="stat"><b>${mot}</b><span class="mut">motornih vozil</span></div>
+        <div class="stat"><b>${span>0.05?Math.round(mot/span):'–'}</b><span class="mut">motornih vozil / uro</span></div>
+        <div class="stat"><b>${people}</b><span class="mut">oseb v avtih, kombijih, avtobusih, vlakih</span></div>
+        <div class="stat"><b>${avg(T(t,'*','sum','avto'),T(t,'*','cnt','avto'))}</b><span class="mut">povpr. oseb / avto</span></div>
+      </div></div>
+
+    <div class="card"><h3>✏️ Podatki seje</h3>
+      <div class="kv"><span>Lokacija</span><span>${esc(s.location)}</span><span>Opazovalec</span><span>${esc(s.observer)||'–'}</span>
+        <span>Opomba</span><span>${esc(s.note)||'–'}</span>${s.dir_a||s.dir_b?`<span>Smeri</span><span>A: ${esc(s.dir_a)||'–'} · B: ${esc(s.dir_b)||'–'}</span>`:''}</div>
+      <details><summary class="mut" style="cursor:pointer">Uredi lokacijo, opazovalca, opombo …</summary>
+        <label>Lokacija *</label><input id="e_loc" value="${esc(s.location)}">
+        <label>Opazovalec</label><input id="e_obs" value="${esc(s.observer)}">
+        <label>Opomba</label><input id="e_note" value="${esc(s.note)}">
+        <div class="row"><div><label>Smer A</label><input id="e_da" value="${esc(s.dir_a)}"></div><div><label>Smer B</label><input id="e_db" value="${esc(s.dir_b)}"></div></div>
+        <div class="row"><div><label>Lat</label><input id="e_lat" inputmode="decimal" value="${s.lat??''}"></div><div><label>Lon</label><input id="e_lon" inputmode="decimal" value="${s.lon??''}"></div></div>
+        <div class="btns"><button class="small primary" id="e_save">Shrani podatke</button></div>
+      </details>
+      <div class="btns"><a class="btn small" href="#records/${sid}">📋 Vsi zapisi (${evs.length})</a></div></div>
+
+    <div class="card"><h3>⏱ Čas štetja</h3>
+      <div class="kv">
+        <span>Začetek</span><span>${fmtTime(s.started_at)}</span>
+        <span>Konec</span><span>${s.ended_at?fmtTime(s.ended_at):'še teče'}</span>
+        <span>Trajanje</span><span>${dur(end-s.started_at)}</span>
+        <span>Prvi zapis</span><span>${ts.length?hms(ts[0]):'–'}</span>
+        <span>Zadnji zapis</span><span>${ts.length?hms(ts[ts.length-1]):'–'}</span>
+        <span>Zapisov</span><span>${evs.length}</span>
+      </div>
+      ${gp.length?`<div class="gap" style="font-size:14px;margin-top:6px">⚠ Prekinitve (brez zapisov več kot 10 min):<br>${gp.map(([a,b])=>`${hm(a)}–${hm(b)} (${dur(b-a)})`).join('<br>')}</div>`:''}
+      <details style="margin-top:8px"><summary class="mut" style="cursor:pointer">Popravi začetek / konec</summary>
+        <label>Začetek</label><input type="datetime-local" id="ts1" value="${localInput(s.started_at)}">
+        <label>Konec (prazno = še teče)</label><input type="datetime-local" id="ts2" value="${localInput(s.ended_at)}">
+        <div class="btns"><button class="small" id="tfirst">Začetek = prvi zapis</button><button class="small" id="tlast">Konec = zadnji zapis</button><button class="small primary" id="tsave">Shrani čase</button></div>
+        <p class="mut">Hitrost (vozila/uro) se računa iz začetka in konca. Če je bila aplikacija po nesreči zaprta, nastavi dejanski konec.</p>
+      </details></div>
+
+    <div class="card">${h}<p class="mut">“5+” šteje kot 5 oseb, “60+” kot 60 potnikov. Povprečje pri avtobusih upošteva samo avtobuse s preštetimi potniki.</p></div>
+
+    <div class="card"><h3>🌤️ Vreme</h3>
+      ${wx.length?wx.map(r=>`<div class="wx"><span>${hm(r.t)}</span><span>${wxIcon(r.code)} ${wxDesc(r.code)}</span><span style="margin-left:auto">${String(r.temp).replace('.',',')} °C · ${String(r.precip).replace('.',',')} mm · veter ${Math.round(r.wind)} km/h</span></div>`).join('')
+        :`<p class="mut">${s.lat==null?'Ni lokacije – vreme se ne beleži.':'Ni zapisov o vremenu (ni bilo interneta?).'}</p>`}
+      <div class="btns">${s.lat==null?'<button class="small" id="addloc">📍 Dodaj lokacijo</button>':'<button class="small" id="wxnow">Preberi vreme zdaj</button>'}</div></div>
+
+    <div class="card"><h3>⬇ Izvoz CSV</h3><span class="mut">Shrani v Download/Stetje prometa in odpre deljenje.</span>
+      <div class="btns">
+        <button class="small" data-x="raw">Vsak zapis</button>
+        <button class="small" data-x="15">15-min vsote</button>
+        <button class="small" data-x="60">Urne vsote</button>
+      </div>
+      <label class="chk"><input type="checkbox" id="semi" ${semiOn?'checked':''}> Oblika za Excel (ločilo ; in decimalna vejica)</label></div>
+
+    <div class="btns" style="margin-bottom:24px">
+      ${s.ended_at?`<button id="reopen">Ponovno odpri</button>`:`<a class="btn primary" href="#count/${sid}">◀ Nadaljuj štetje</a><button id="close">Zaključi sejo</button>`}
+      <button class="danger" id="del">Izbriši</button></div>
+  </main>`;
+
+  $('#semi').onchange=e=>store.write('semi.txt',e.target.checked?'1':'0');
+  app.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{
+    const semi=$('#semi').checked,x=b.dataset.x,base=`stetje_${s.id}_${slug(s.location)}`;
+    if(x==='raw')exportCsv(`${base}_zapisi_${stamp()}.csv`,csv([RAW_HEAD,...rawRows(s,evs)],semi));
+    else exportCsv(`${base}_${x}min_${stamp()}.csv`,csv([['seja_id','lokacija','od','do','smer','smer_opis',...INT_COLS,...WX_COLS],...intervalRows(s,evs,+x)],semi));
+  });
+  $('#tfirst').onclick=()=>{if(ts.length)$('#ts1').value=localInput(ts[0])};
+  $('#tlast').onclick=()=>{if(ts.length)$('#ts2').value=localInput(ts[ts.length-1]+60000)};
+  $('#tsave').onclick=()=>{
+    const a=$('#ts1').value?new Date($('#ts1').value).getTime():NaN;
+    const b=$('#ts2').value?new Date($('#ts2').value).getTime():null;
+    if(!isFinite(a)){toast('Neveljaven začetek');return}
+    if(b!=null&&!(b>a)){toast('Konec mora biti za začetkom');return}
+    s.started_at=a;s.ended_at=b;saveSessions();toast('Časi shranjeni');viewResults(sid)};
+  $('#e_save').onclick=()=>{
+    const loc=$('#e_loc').value.trim();if(!loc){toast('Lokacija ne sme biti prazna');return}
+    const num=v=>{v=String(v).trim().replace(',','.');if(!v)return null;const f=parseFloat(v);return isFinite(f)?f:null};
+    const lat=num($('#e_lat').value),lon=num($('#e_lon').value);
+    if((lat!=null&&(lat<-90||lat>90))||(lon!=null&&(lon<-180||lon>180))){toast('Neveljavne koordinate');return}
+    Object.assign(s,{location:loc,observer:$('#e_obs').value.trim(),note:$('#e_note').value.trim(),
+      dir_a:$('#e_da').value.trim(),dir_b:$('#e_db').value.trim(),lat,lon});
+    saveSessions();toast('Podatki seje shranjeni');viewResults(sid)};
+  const al=$('#addloc');if(al)al.onclick=()=>locate((lat,lon,acc)=>{s.lat=+lat.toFixed(6);s.lon=+lon.toFixed(6);saveSessions();toast(`Lokacija shranjena (±${Math.round(acc)} m)`);viewResults(sid)});
+  const wn=$('#wxnow');if(wn)wn.onclick=async()=>{await wxCheck(s,true);viewResults(sid)};
+  const c=$('#close');if(c)c.onclick=async()=>{
+    if(!await ask('Zaključim sejo? Konec bo nastavljen na zdaj – kasneje ga lahko popraviš.','Zaključi'))return;
+    s.ended_at=Date.now();saveSessions();viewResults(sid);
+    if(await ask('Seja je zaključena. Izvozim CSV z vsemi zapisi zdaj? Tako imaš kopijo tudi zunaj aplikacije.','Izvozi CSV'))exportRaw(s)};
+  const ro=$('#reopen');if(ro)ro.onclick=()=>{s.ended_at=null;saveSessions();location.hash='#count/'+sid};
+  $('#del').onclick=async()=>{
+    if(!await ask(`Izbrišem sejo »${s.location}« z vsemi zapisi? Tega ni mogoče razveljaviti.`,'Izbriši',true))return;
+    sessions=sessions.filter(x=>x.id!==s.id);saveSessions();
+    for(const f of [`ev_${s.id}.log`,`wx_${s.id}.log`,`dir_${s.id}.txt`])store.remove(f);
+    toast('Izbrisano');location.hash='#'};
+}
+
+/* ================= all records ================= */
+const recFilter={};
+function viewRecords(sid){
+  const s=getS(sid);if(!s){location.hash='#';return}
+  setDirClass('');paintWx(null);
+  const evs=loadEvents(sid).sort((a,b)=>b.t-a.t),wx=loadWx(sid);
+  $('#title').textContent='Zapisi · '+s.location;
+  const cats=[...new Set(evs.map(e=>e.c))];
+  const filt=cats.includes(recFilter[sid])?recFilter[sid]:'';
+  const shown=filt?evs.filter(e=>e.c===filt):evs;
+  let day='';
+  app.innerHTML=`<main>
+    <div class="card">
+      <div class="row" style="align-items:center"><span class="mut" style="flex:2">${shown.length} od ${evs.length} zapisov, najnovejši zgoraj · pridrži zapis za brisanje</span>
+      <select id="rf" style="flex:2;padding:8px;border-radius:8px;background:#0005;color:var(--fg);border:1px solid var(--line);font-size:15px">
+        <option value="">Vse kategorije</option>${cats.map(c=>`<option value="${c}" ${c===filt?'selected':''}>${CAT[c]?CAT[c].lb:c}</option>`).join('')}</select></div>
+      <div style="margin-top:6px">${shown.length?shown.map(e=>{
+        const d=new Date(e.t).toDateString(),hdr=d!==day?(day=d,`<div class="mut" style="padding:8px 0 2px;font-weight:600">${fmtTime(e.t).split(' ').slice(0,2).join(' ')}</div>`):'';
+        const w=wxAt(wx,e.t);
+        return hdr+`<div class="rec" data-u="${e.u}"><span class="dot ${e.d||'N'}"></span><span class="tm">${hms(e.t)}</span><span class="tx">${evText(e,s)}${w?` <span class="mut">${wxIcon(w.code)} ${Math.round(w.temp)}°</span>`:''}</span></div>`}).join('')
+        :'<p class="mut">Ni zapisov.</p>'}</div></div>
+    <div class="btns" style="margin-bottom:24px"><a class="btn" href="#results/${sid}">◀ Rezultati</a>${s.ended_at?'':`<a class="btn primary" href="#count/${sid}">Nadaljuj štetje</a>`}</div>
+  </main>`;
+  $('#rf').onchange=e=>{recFilter[sid]=e.target.value;viewRecords(sid)};
+  app.querySelectorAll('.rec[data-u]').forEach(r=>longPress(r,async()=>{
+    const e=evs.find(x=>x.u===r.dataset.u);if(!e)return;
+    if(!await confirmDelete(e,s))return;
+    deleteEvent(sid,e.u);toast('Zapis izbrisan');viewRecords(sid)}));
+}
+
+/* ================= router ================= */
+function route(){
+  clearInterval(timerI);clearInterval(wxI);$('#clock').textContent='';keepAwake(false);
+  $('#sheet').classList.add('hidden');$('#modal').classList.add('hidden');$('#choice').classList.add('hidden');
+  const h=location.hash;let m;
+  if((m=h.match(/^#count\/(\d+)/)))viewCount(m[1]);
+  else if((m=h.match(/^#results\/(\d+)/)))viewResults(m[1]);
+  else if((m=h.match(/^#records\/(\d+)/)))viewRecords(m[1]);
+  else viewHome();
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',route);
+/* Android back button: close dialogs, else go to session list, else exit */
+window.onBack=()=>{
+  if(!$('#modal').classList.contains('hidden')){modalCb&&modalCb();return true}
+  if(!$('#sheet').classList.contains('hidden')){$('#sheet').classList.add('hidden');sheetCb=null;return true}
+  if(!$('#choice').classList.contains('hidden')){$('#choice').classList.add('hidden');choiceCb=null;return true}
+  const rm=location.hash.match(/^#records\/(\d+)/);if(rm){location.hash='#results/'+rm[1];return true}
+  const rs=location.hash.match(/^#results\/(\d+)/);if(rs){const s=getS(rs[1]);location.hash=s&&!s.ended_at?'#count/'+rs[1]:'#';return true}
+  if(location.hash&&location.hash!=='#'){location.hash='#';return true}
+  return false};
+route();
+</script>
+</body>
+</html>
